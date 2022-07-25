@@ -10,26 +10,116 @@
   - name: Create user, domain and database
     import_tasks: tasks/hs_basis.yml
 
+  #################################
+  ## install requirements: composer
+  #################################
+  - name: Install composer
+    import_tasks: tasks/hscomposer.yml
+
+  #################################
+  ## create directories
+  #################################
+  - name: create directory suitecrm
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
+      state: directory
+
+  - name: create directory cache
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/suitecrm/cache"
+      state: directory
+      mode: 1777
+
   ##################################
   ## install SuiteCRM
   ##################################
 
-  # TODO
-
-  ##################################
-  ## configuration
-  ##################################
-
-  # TODO
+  - name: install suitecrm
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    unarchive:
+      src: https://github.com/salesagility/SuiteCRM/archive/refs/tags/v{{suitecrm_version}}.tar.gz
+      remote_src: yes
+      dest: /home/pacs/{{pac}}/users/{{user}}/suitecrm
+      extra_opts: [--strip-components=1]
+      creates: /home/pacs/{{pac}}/users/{{user}}/suitecrm_version.php
 
   ######################
   ## initialise instance
   ######################
+  - name: install dependencies with composer
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    shell: |
+      ~/composer/composer.phar --no-interaction install --no-dev --optimize-autoloader -n || exit -1
+      touch "/home/pacs/{{pac}}/users/{{user}}/.ansible_composer_ran"
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
+      creates: "/home/pacs/{{pac}}/users/{{user}}/.ansible_composer_ran"
 
-  # TODO
+  # see http://www.jsmackin.co.uk/suitecrm/suitecrm-command-line-install/
+  - name: upload setup configuration file for silent install
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template: dest="/home/pacs/{{pac}}/users/{{user}}/suitecrm" src="templates/config_si.php" mode=0600
+
+  - name: run silent install
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    shell: |
+      php-cgi -f install.php goto=SilentInstall cli=true || exit -1
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
 
   ########################
   ## setup the apache site
   ########################
+  - name: check for htdocs-ssl directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    stat:
+      path: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+    register: htdocs_exists
 
-  # TODO
+  - name: drop htdocs-ssl directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+      state: absent
+    when: htdocs_exists.stat.islnk is defined and htdocs_exists.stat.islnk == False
+
+  - name: create symbolic link for htdocs-ssl
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      src: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+      state: link
+
+  - name: fix issue with cache
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    shell: |
+      curl "https://{{domain}}/index.php?module=Users&action=Login" || exit -1
+      chmod -R a+rwx cache || exit -1
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
+
+  ####################################ndex.php?module=EmailMan&action=config
+  ## install cron jobs
+  ####################################
+  - name: run suitecrm cronjob
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    cron:
+      name: "suitecrm"
+      minute: "*/2"
+      job: "cd $HOME/suitecrm && /usr/bin/php -f cron.php > /dev/null 2>&1"

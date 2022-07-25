@@ -7,3 +7,13 @@ suitecrm:
       domain: suitecrm.example.org
       user: suitecrm
       password: testpassw0rd_changeme
+
+      SiteName: "My SuiteCRM"
+      AdminUsername: "admin"
+      AdminPassword: "topsecret"
+
+      # see https://github.com/salesagility/SuiteCRM/releases
+      suitecrm_version: 7.12.6
+
+      # see https://getcomposer.org/download/
+      composer_version: 2.3.10
