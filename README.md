@@ -1,7 +1,7 @@
 Hostsharing-Ansible-SuiteCRM
 ============================
 
-This Ansible playbook will install the latest SuiteCRM release on a server from www.hostsharing.net.
+This Ansible playbook will install the latest [SuiteCRM](https://suitecrm.com/) release on a server from www.hostsharing.net.
 
 To use these modules we have to create a file named ".hsadmin.properties" in the home directory of the package admins. Into that file we have to insert the packagename and password of the package admin. 
 
