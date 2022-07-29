@@ -113,7 +113,28 @@
       executable: /bin/bash
       chdir: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
 
-  ####################################ndex.php?module=EmailMan&action=config
+  # see https://docs.suitecrm.com/admin/installation-guide/languages/install-a-new-language/
+  - name: download language packs
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    get_url:
+      url: "https://sourceforge.net/projects/suitecrmtranslations/files/{{suitetranslation_version}}/SuiteCRM%20core%20%28{{item}}%29.zip/download"
+      dest: /home/pacs/{{pac}}/users/{{user}}/suitecrm/upload/upgrades/langpack
+    loop: "{{ ['de', 'fr', 'es-ES'] }}"
+
+  - name: extract manifest from language packs
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    warn: False
+    shell: |
+      unzip SuiteCRM%20core%20%28{{item}}%29.zip manifest.php
+      mv manifest.php SuiteCRM%20core%20%28{{item}}%29-manifest.php
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/suitecrm/upload/upgrades/langpack"
+    loop: "{{ ['de', 'fr', 'es-ES'] }}"
+
+  ####################################
   ## install cron jobs
   ####################################
   - name: run suitecrm cronjob

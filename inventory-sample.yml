@@ -14,6 +14,8 @@ suitecrm:
 
       # see https://github.com/salesagility/SuiteCRM/releases
       suitecrm_version: 7.12.6
+      # see https://sourceforge.net/projects/suitecrmtranslations/files/
+      suitetranslation_version: "7.11.x"
 
       # see https://getcomposer.org/download/
       composer_version: 2.3.10
