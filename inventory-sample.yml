@@ -13,7 +13,7 @@ suitecrm:
       AdminPassword: "topsecret"
 
       # see https://github.com/salesagility/SuiteCRM/releases
-      suitecrm_version: 7.12.6
+      suitecrm_version: 7.12.7
       # see https://sourceforge.net/projects/suitecrmtranslations/files/
       suitetranslation_version: "7.11.x"
 
