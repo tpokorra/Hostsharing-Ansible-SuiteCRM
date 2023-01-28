@@ -1,5 +1,6 @@
 ---
 - hosts: suitecrm
+  become_user: "{{pac}}-{{user}}"
   vars:
     ansible_python_interpreter: /usr/bin/python3
     # see https://docs.ansible.com/ansible/latest/user_guide/become.html#risks-of-becoming-an-unprivileged-user
@@ -33,6 +34,14 @@
       path: "/home/pacs/{{pac}}/users/{{user}}/suitecrm/cache"
       state: directory
       mode: 1777
+
+  ##################################
+  ## configuration
+  ##################################
+  - name: upload mysql configuration file
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template: dest="/home/pacs/{{pac}}/users/{{user}}/.my.cnf" src="templates/my.cnf" mode=0600
 
   ##################################
   ## install SuiteCRM
@@ -113,22 +122,25 @@
       executable: /bin/bash
       chdir: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
 
+  - name: create directory for language packs
+    become: yes
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/suitecrm/upload/upgrades/langpack"
+      state: directory
+
   # see https://docs.suitecrm.com/admin/installation-guide/languages/install-a-new-language/
   - name: download language packs
     become: yes
-    become_user: "{{pac}}-{{user}}"
     get_url:
       url: "https://sourceforge.net/projects/suitecrmtranslations/files/{{suitetranslation_version}}/SuiteCRM%20core%20%28{{item}}%29.zip/download"
-      dest: /home/pacs/{{pac}}/users/{{user}}/suitecrm/upload/upgrades/langpack
+      dest: "/home/pacs/{{pac}}/users/{{user}}/suitecrm/upload/upgrades/langpack/SuiteCRM core ({{item}}).zip"
     loop: "{{ ['de', 'fr', 'es-ES'] }}"
 
   - name: extract manifest from language packs
     become: yes
-    become_user: "{{pac}}-{{user}}"
-    warn: False
     shell: |
-      unzip SuiteCRM%20core%20%28{{item}}%29.zip manifest.php
-      mv manifest.php SuiteCRM%20core%20%28{{item}}%29-manifest.php
+      unzip "SuiteCRM core ({{item}}).zip" manifest.php
+      mv manifest.php "SuiteCRM core ({{item}})-manifest.php"
     args:
       executable: /bin/bash
       chdir: "/home/pacs/{{pac}}/users/{{user}}/suitecrm/upload/upgrades/langpack"
