@@ -1,0 +1,52 @@
+---
+- hosts: suitecrm
+  become_user: "{{pac}}-{{user}}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    # see https://docs.ansible.com/ansible/latest/user_guide/become.html#risks-of-becoming-an-unprivileged-user
+    ansible_common_remote_group: "{{pac}}"
+    ansible_remote_tmp: ~/.ansible/tmp
+
+  tasks:
+
+    - name: check if backup file exists
+      become: yes
+      stat: 
+        path: "/home/pacs/{{pac}}/users/{{user}}/Backup-{{ ansible_date_time.date }}.tar.gz"
+      register: backup_done
+
+    - name: create backup of files
+      become: yes
+      archive:
+        path: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
+        dest: "/home/pacs/{{pac}}/users/{{user}}/Backup-{{ ansible_date_time.date }}.tar.gz"
+      when: backup_done.stat.exists == False
+
+    - name: create backup of database
+      become: yes
+      shell: |
+        mysqldump {{pac}}_{{user}} | gzip > "/home/pacs/{{pac}}/users/{{user}}/Backup-{{ ansible_date_time.date }}.sql.gz"
+      args:
+        executable: /bin/bash
+      when: backup_done.stat.exists == False
+
+    # see https://suitecrm.com/upgrade-suitecrm/
+    - name: download the upgrade
+      become: yes
+      get_url:
+        url: "{{upgrade_url}}"
+        dest: "/home/pacs/{{pac}}/users/{{user}}/{{upgrade_file}}"
+
+    - name: apply the upgrade
+      become: yes
+      shell: |
+        php modules/UpgradeWizard/silentUpgrade.php ../{{upgrade_file}} update.log . {{AdminUsername}} || exit -1
+      args:
+        executable: /bin/bash
+        chdir: "/home/pacs/{{pac}}/users/{{user}}/suitecrm"
+
+    - name: drop the upgrade file
+      become: yes
+      file:
+          path: "/home/pacs/{{pac}}/users/{{user}}/{{upgrade_file}}"
+          state: absent
