@@ -13,13 +13,13 @@ suitecrm:
       AdminPassword: "topsecret"
 
       # see https://github.com/salesagility/SuiteCRM/releases
-      suitecrm_version: 7.12.9
+      suitecrm_version: 7.12.10
 
       # see https://suitecrm.com/upgrade-suitecrm/
       # see https://sourceforge.net/projects/suitecrm/files/upgrades/
-      upgrade_directory: "suitecrm-upgrade-7-12-x-to-7-12-9"
-      upgrade_file: "SuiteCRM-Upgrade-7.12.x-to-7.12.9.zip"
-      upgrade_url: "https://github.com/salesagility/SuiteCRM/releases/download/v7.12.9/SuiteCRM-Upgrade-7.12.x-to-7.12.9.zip"
+      upgrade_directory: "suitecrm-upgrade-7-12-x-to-7-12-10"
+      upgrade_file: "SuiteCRM-Upgrade-7.12.x-to-7.12.10.zip"
+      upgrade_url: "https://github.com/salesagility/SuiteCRM/releases/download/v7.12.10/SuiteCRM-Upgrade-7.12.x-to-7.12.10.zip"
 
       # see https://sourceforge.net/projects/suitecrmtranslations/files/
       suitetranslation_version: "7.11.x"
